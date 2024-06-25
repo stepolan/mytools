@@ -1,6 +1,6 @@
 # My Tools
 
-This repository contains several Python tools.
+This repository contains several simple Python tools.
 
 ## Tools Included
 
@@ -16,7 +16,7 @@ This repository contains several Python tools.
 
 ## Style Guide
 
-Please refer to the [Style Guide](./STYLEGUIDE.md) for coding standards and practices.
+Please refer to the [Style Guide](./STYLEGUIDE.md) for coding consistency.
 
 ## License
 
