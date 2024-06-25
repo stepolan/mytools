@@ -1,0 +1,11 @@
+name: mytools
+channels:
+  - defaults
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+    - requests
+    - beautifulsoup4
+    - youtube-dl
+
