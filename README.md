@@ -3,6 +3,7 @@
 This repository contains several Python tools.
 
 ## Tools Included
+
 - find-imports.py: A script to find import statements in Python files.
 - dl-transcripts.py: A tool to download transcripts.
 - scrape-with-links.py: A scraper that includes links.
@@ -14,8 +15,9 @@ This repository contains several Python tools.
 - scrape.py: General scraping tool.
 
 ## Style Guide
+
 Please refer to the [Style Guide](./STYLEGUIDE.md) for coding standards and practices.
 
 ## License
-This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENSE) file for details.
 
+This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENSE) file for details.
