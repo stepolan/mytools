@@ -13,6 +13,8 @@ This repository contains several simple Python tools.
 - dirfn2txt.py: Converts directory filenames to a text file.
 - get-links.py: Extracts links from web pages.
 - scrape.py: General scraping tool.
+- quick-cat.py: A tool to quickly concatenate files.
+- fetch-licenses.py: Fetches licenses for packages in environment.yml and/or requirements.txt.
 
 ## Style Guide
 
