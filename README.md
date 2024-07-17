@@ -118,7 +118,7 @@ python get-links.py url
 
 ### quick-cat.py
 
-Concatenates multiple files into a markdown file, preserving the directory structure.
+Concatenates multiple files into a markdown file, along with the directory structure, and a prompt meant to bring an LLM up to speed on your project.
 
 Example Usage:
 
