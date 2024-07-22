@@ -38,7 +38,7 @@ from pathlib import Path
 import glob
 
 # Constants
-CHUNK_SIZE = 4096
+CHUNK_SIZE = 90000
 
 # Sets up logging
 def setup_logging(script_name):
@@ -486,7 +486,7 @@ def collect_files(patterns, recursive=False):
     files = []
     for pattern in patterns:
         if recursive:
-            files.extend(glob.glob(pattern, recursive=True))
+            files.extend(glob.glob(f'**/{pattern}', recursive=True))
         else:
             files.extend(glob.glob(pattern))
     return files
