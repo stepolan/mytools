@@ -14,7 +14,9 @@ This repository contains several simple Python tools designed for various tasks 
 - **find-imports.py**: Finds and lists import statements in Python files within a specified directory.
 - **generate_test_stubs.py**: Generates unit test stubs for functions in a Flask application.
 - **get-links.py**: Extracts hyperlinks from a given webpage URL.
+- **install_scripts.py**: Lists Python files in the current directory, prompts the user to make them executable, and moves them to `/usr/local/bin`.
 - **quick-cat.py**: Concatenates multiple files into a markdown file, preserving the directory structure.
+- **remove_line_from_files.py**: Searches for files with a specified extension in a directory, finds an exact line in each file, and removes that line.
 - **scrape-with-links.py**: Scrapes content from a list of URLs and saves the content to a specified directory.
 - **scrape.py**: Scrapes content from a single URL and saves the content to a specified output file.
 - **show_file_changes.py**: Displays all changes made to a specific file in a Git repository.
@@ -116,6 +118,16 @@ Example Usage:
 python get-links.py url
 ```
 
+### install_scripts.py
+
+Lists Python files in the current directory, prompts the user to make them executable, and moves them to `/usr/local/bin`.
+
+Example Usage:
+
+```bash
+python install_scripts.py
+```
+
 ### quick-cat.py
 
 Concatenates multiple files into a markdown file, preserving the directory structure.
@@ -124,6 +136,16 @@ Example Usage:
 
 ```bash
 python quick-cat.py file1.py file2.js -o output.md --copy
+```
+
+### remove_line_from_files.py
+
+Searches for files with a specified extension in a directory, finds an exact line in each file, and removes that line.
+
+Example Usage:
+
+```bash
+python remove_line_from_files.py --extension .txt --line "Sample line to remove"
 ```
 
 ### scrape-with-links.py
