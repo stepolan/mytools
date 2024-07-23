@@ -11,23 +11,31 @@ Purpose:
     and relationships between the files.
 
 Usage example:
-    python quick-cat.py app.py ./source/config.py /static/js/javascript.js /templates/index.html -o combined_output.md --copy
+    python quick-cat.py "*.py" "./source/*.py" "/static/js/*.js" "/templates/*.html" -o combined_output.md --copy
 
-    This command concatenates app.py, config.py, javascript.js, and index.html into a markdown file named combined_output.md,
-    including a directory structure and syntax highlighting for each file's content. The --copy flag copies the output to the clipboard.
+    This command concatenates all .py files, .js files in /static/js, and .html files in /templates into a 
+    markdown file named combined_output.md, including a directory structure and syntax highlighting for each 
+    file's content. The --copy flag copies the output to the clipboard.
 
 Arguments:
-    files (list of str): List of file paths to concatenate.
+    patterns (list of str): List of file patterns to concatenate.
     -o, --output (str): Output file name (default: output.md).
-    --skip-prompt (bool): Skip adding the additional prompt content at the beginning.
-    --copy (bool): Copy the output to the clipboard.
+    -sp, --skip-prompt (bool): Skip adding the additional prompt content at the beginning.
+    -pf, --prompt-file (str): Path to a file containing the prompt content to include at the beginning.
+    -c, --copy (bool): Copy the output to the clipboard.
+    -r, --recursive (bool): Recursively search directories for files matching the patterns.
+    -ex, --exclude (list of str): Patterns of files to exclude.
+    -cs, --chunk-size (int): Chunk size for splitting the output file (default: 150000).
+    -d, --delete-chunks (bool): Delete chunk files after copying to clipboard.
 
 Output:
     The script produces a markdown file with the following features:
     - A visual representation of the directory structure of the input files.
     - Concatenated contents of each file, with appropriate markdown syntax highlighting based on file type.
+    - Optionally splits the output into chunks with end-of-part messages and continuation notices.
+    - Optionally copies the output or chunks to the clipboard.
+    - Optionally deletes the chunk files after copying to clipboard.
 """
-
 
 import os
 import argparse
@@ -38,7 +46,7 @@ from pathlib import Path
 import glob
 
 # Constants
-CHUNK_SIZE = 90000
+CHUNK_SIZE = 100000
 
 # Sets up logging
 def setup_logging(script_name):
@@ -72,7 +80,7 @@ def generate_directory_structure(files):
         try:
             relative_path = path.relative_to(root)
         except ValueError:
-            relative_path = path  # If the path is not relative, use the absolute path
+            relative_path = path
         parts = list(relative_path.parts)
         for i in range(len(parts)):
             part = parts[:i + 1]
@@ -130,8 +138,7 @@ def get_file_type(file):
     }
     return file_types.get(ext, '')
 
-# Concatenation
-def concatenate_files(files, output_file, skip_prompt=False):
+def concatenate_files(files, output_file, skip_prompt=False, prompt_file=None):
     """
     Concatenates the content of multiple files, adds directory structure and file type annotations.
 
@@ -139,12 +146,20 @@ def concatenate_files(files, output_file, skip_prompt=False):
         files (list of str): List of file paths to concatenate.
         output_file (str): The name of the output file.
         skip_prompt (bool): Whether to skip adding the additional prompt content at the beginning.
+        prompt_file (str): Path to a file containing the prompt content to include at the beginning.
     """
     with open(output_file, 'w') as out_file:
-        if not skip_prompt:
+        if prompt_file:
+            try:
+                with open(prompt_file, 'r') as pf:
+                    prompt_content = pf.read()
+                out_file.write(prompt_content + '\n\n')
+            except Exception as e:
+                logging.error(f"Error reading prompt file {prompt_file}: {e}")
+        elif not skip_prompt:
             # Write the LLM prompt
             out_file.write("You are a super helpful coding assistant!\n\n")
-            out_file.write("Below you will find relevant files for a project I am working on. Please analyze these different files and confirm that you understand their purpose. Do not offer updates or show me code at this time. If you do not understand something, please ask me questions for clarification.\n\n")
+            out_file.write("Instructions:\n\nBelow you will find relevant files for a project I am working on. Please analyze these different files and confirm that you understand their purpose. I will provide multiple files, and I will let you know when the final file is provided. Do not offer updates or show me code at this time. If you do not understand something, please ask me questions for clarification.\n\n")
             out_file.write("\n# When providing code help, please adhere to the following guidelines\n")
             out_file.write("\n1. **Provide Code in Sections**: Do not provide whole files. Instead, provide specific sections, functions, or lines as needed.\n")
             out_file.write("\n2. **Example for Line Changes**:\n")
@@ -295,6 +310,7 @@ def concatenate_files(files, output_file, skip_prompt=False):
             out_file.write("    - Use `lower_case_with_underscores` for functions and variable names.\n")
             out_file.write("    - Use `UPPER_CASE_WITH_UNDERSCORES` for constants.\n")
             out_file.write("\nRemember to follow the guidelines provided in the style guide to maintain consistency and readability in the code.\n")
+            out_file.write("\nINSTRUCTION I am senging multiple parts, please confirm receipt of the files and let me know when you are ready for the next part.  Do not do anything else until you have all the parts.\n\n")
                 
         # Write the directory structure
         out_file.write("\nHere is the directory structure:\n")
@@ -324,7 +340,6 @@ def concatenate_files(files, output_file, skip_prompt=False):
                 logging.error(f"Error reading file {file}: {e}")
             
             out_file.write('\n```\n\n')
-
 
 def split_into_chunks(file_path, chunk_size=CHUNK_SIZE):
     """
@@ -400,9 +415,10 @@ def split_into_chunks_with_messages(file_path, chunk_size=CHUNK_SIZE):
 
     return chunk_files
 
-def split_into_chunks_with_messages(file_path, chunk_size=CHUNK_SIZE):
+def split_into_chunks_with_messages(file_path, chunk_size):
     """
-    Splits a file into smaller chunks with whole lines and adds end-of-part messages.
+    Splits a file into smaller chunks with whole lines and handles code boxes properly,
+    adding end-of-part messages and continuation notices.
 
     Parameters:
         file_path (str): The path to the file to split.
@@ -418,19 +434,44 @@ def split_into_chunks_with_messages(file_path, chunk_size=CHUNK_SIZE):
     chunks = []
     current_chunk = ''
     part_number = 1
+    in_code_box = False
+    current_file_name = ""
+
+    def add_end_of_part_message(chunk, part_number, current_file_name, in_code_box):
+        if in_code_box:
+            chunk += '```\n'
+        chunk += f"\n{current_file_name} continued in next file\n"
+        chunk += f"\nEnd of part {part_number}. Please confirm receipt and let me know when you are ready for the next part.\n"
+        return chunk
+
+    def add_start_of_part_message(current_chunk, part_number, current_file_name, in_code_box):
+        current_chunk += f"\nBeginning of part {part_number}\n\n"
+        current_chunk += f"{current_file_name} (continued)\n\n"
+        if in_code_box:
+            current_chunk += '```python\n'  # Assuming it's a Python file; adjust as needed
+        return current_chunk
 
     for line in lines:
+        if line.startswith('```') and not in_code_box:
+            in_code_box = True
+        elif line.startswith('```') and in_code_box:
+            in_code_box = False
+
         if len(current_chunk) + len(line) > chunk_size:
-            # Add end-of-part message
-            if part_number == len(chunks) + 1:  # For all parts except the last one
-                current_chunk += f"\nEnd of part {part_number}. Please confirm receipt and let me know when you are ready for the next part.\n"
+            current_chunk = add_end_of_part_message(current_chunk, part_number, current_file_name, in_code_box)
             chunks.append(current_chunk)
-            current_chunk = ''
             part_number += 1
+            current_chunk = add_start_of_part_message('', part_number, current_file_name, in_code_box)
+
         current_chunk += line
 
-    # Add the last chunk
+        # Track the current file name for continuation messages
+        if line.startswith('./') and not in_code_box:
+            current_file_name = line.strip()
+
     if current_chunk:
+        if in_code_box:
+            current_chunk += '```\n'
         current_chunk += f"\nEnd of part {part_number}. This is the final part. Please confirm receipt of all parts and proceed with the analysis only after receiving this message.\n"
         chunks.append(current_chunk)
 
@@ -446,7 +487,6 @@ def split_into_chunks_with_messages(file_path, chunk_size=CHUNK_SIZE):
         chunk_files.append(chunk_file_path)
 
     return chunk_files
-
 
 # Copy contents to clipboard
 def copy_to_clipboard(content):
@@ -472,24 +512,45 @@ def copy_to_clipboard(content):
         logging.error(f"Error copying contents to clipboard: {e}")
 
 # Add recursive option to glob
-def collect_files(patterns, recursive=False):
+def collect_files(patterns, exclude_patterns=None, recursive=False):
     """
     Collects files matching the given patterns, optionally searching directories recursively.
+    Excludes files matching the given exclusion patterns.
 
     Parameters:
         patterns (list of str): List of file patterns to match.
+        exclude_patterns (list of str): List of file patterns to exclude.
         recursive (bool): Whether to search directories recursively.
 
     Returns:
         list of str: List of file paths matching the patterns.
     """
-    files = []
+    if exclude_patterns is None:
+        exclude_patterns = []
+
+    all_files = []
     for pattern in patterns:
         if recursive:
-            files.extend(glob.glob(f'**/{pattern}', recursive=True))
+            all_files.extend(glob.glob(f'**/{pattern}', recursive=True))
         else:
-            files.extend(glob.glob(pattern))
-    return files
+            all_files.extend(glob.glob(pattern))
+
+    excluded_files = set()
+    for pattern in exclude_patterns:
+        if recursive:
+            excluded_files.update(glob.glob(f'**/{pattern}', recursive=True))
+        else:
+            excluded_files.update(glob.glob(pattern))
+
+    # Exclude directories and their contents
+    excluded_dirs = {Path(p).resolve() for p in exclude_patterns if Path(p).is_dir()}
+    result_files = []
+    for file in all_files:
+        file_path = Path(file).resolve()
+        if file_path not in excluded_files and not any(file_path.is_relative_to(d) for d in excluded_dirs):
+            result_files.append(file)
+    
+    return result_files
 
 def main():
     """
@@ -497,41 +558,57 @@ def main():
     """
     usage_example = """\
     Usage example:
-        python quick-cat.py *.py *.js *.html -o my_files_combined.md --copy --recursive
+        python quick-cat.py "*.py" "*.js" "*.html" -o my_files_combined.md --copy --recursive --skip-prompt --exclude "bootstrap*.*" "./migrations/" "./tools/" "./docker/" --chunk-size 150000 --prompt-file prompt.txt
     """
     description = "Concatenate files with directory structure and content.\n\n" + usage_example
 
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument('patterns', nargs='+', help='List of file patterns to concatenate')
+    parser.add_argument('patterns', nargs='+', help='List of file patterns to concatenate, put in quotes (ex: "*.py" "*.js" "*.html")')
     parser.add_argument('-o', '--output', default='output.md', help='Output file name (default: output.md)')
-    parser.add_argument('--skip-prompt', action='store_true', help='Skip adding the LLM prompt content at the beginning')
-    parser.add_argument('--copy', action='store_true', help='Copy the output to the clipboard')
-    parser.add_argument('--recursive', action='store_true', help='Recursively search directories for files matching the patterns')
+    parser.add_argument('-sp', '--skip-prompt', action='store_true', help='Skip adding the LLM prompt content at the beginning')
+    parser.add_argument('-pf', '--prompt-file', type=str, help='Path to a file containing the prompt content to include at the beginning')
+    parser.add_argument('-c', '--copy', action='store_true', help='Copy the output to the clipboard')
+    parser.add_argument('-r', '--recursive', action='store_true', help='Recursively search directories for files matching the patterns')
+    parser.add_argument('-ex', '--exclude', nargs='+', help='Patterns of files to exclude')
+    parser.add_argument('-cs', '--chunk-size', type=int, default=CHUNK_SIZE, help=f'Chunk size for splitting the output file (default: {CHUNK_SIZE})')
+    parser.add_argument('-d', '--delete-chunks', action='store_true', help='Delete chunk files after copying to clipboard')
 
     args = parser.parse_args()
 
     setup_logging('concatenate_files')
     
-    files = collect_files(args.patterns, recursive=args.recursive)
+    files = collect_files(args.patterns, exclude_patterns=args.exclude, recursive=args.recursive)
     
     if not files:
         logging.error("No files found matching the given patterns.")
         return
     
-    concatenate_files(files, args.output, skip_prompt=args.skip_prompt)
+    concatenate_files(files, args.output, skip_prompt=args.skip_prompt, prompt_file=args.prompt_file)
     logging.info("File concatenation completed successfully.")
     
     # Split the output file into chunks with messages
-    chunk_files = split_into_chunks_with_messages(args.output)
+    chunk_files = split_into_chunks_with_messages(args.output, chunk_size=args.chunk_size)
     logging.info(f"Output file split into {len(chunk_files)} chunks.")
 
     # Ask the user if they want to copy the contents to the clipboard
     if args.copy or input("Do you want to copy the contents to the clipboard? ([y]es/no): ").strip().lower() in ['yes', 'y', '']:
-        for chunk_file in chunk_files:
+        for i, chunk_file in enumerate(chunk_files):
             with open(chunk_file, 'r') as f:
                 chunk_content = f.read()
             copy_to_clipboard(chunk_content)
-            input("Press Enter to copy the next chunk...")
+            print(f"Chunk {i + 1} of {len(chunk_files)} copied to clipboard.")
+            if i < len(chunk_files) - 1:
+                input(f"Press Enter to copy chunk {i + 2} of {len(chunk_files)}...")
+            else:
+                print("All chunks have been copied.")
+
+        if args.delete_chunks or input("Do you want to delete all the chunk files? ([y]es/no): ").strip().lower() in ['yes', 'y', '']:
+            for chunk_file in chunk_files:
+                try:
+                    os.remove(chunk_file)
+                    print(f"Deleted {chunk_file}")
+                except Exception as e:
+                    print(f"Error deleting {chunk_file}: {e}")
 
 if __name__ == '__main__':
     main()

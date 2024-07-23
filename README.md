@@ -15,7 +15,7 @@ This repository contains several simple Python tools designed for various tasks 
 - **generate_test_stubs.py**: Generates unit test stubs for functions in a Flask application.
 - **get-links.py**: Extracts hyperlinks from a given webpage URL.
 - **install_scripts.py**: Lists Python files in the current directory, prompts the user to make them executable, and moves them to `/usr/local/bin`.
-- **quick-cat.py**: Concatenates multiple files into a markdown file, preserving the directory structure.
+- **quick-cat.py**: Concatenates multiple files into a markdown file, preserving the directory structure, and includes chunking and copying to clipboard options.
 - **remove_line_from_files.py**: Searches for files with a specified extension in a directory, finds an exact line in each file, and removes that line.
 - **scrape-with-links.py**: Scrapes content from a list of URLs and saves the content to a specified directory.
 - **scrape.py**: Scrapes content from a single URL and saves the content to a specified output file.
@@ -130,12 +130,12 @@ python install_scripts.py
 
 ### quick-cat.py
 
-Concatenates multiple files into a markdown file, along with the directory structure, and a prompt meant to bring an LLM up to speed on your project.
+Concatenates multiple files into a markdown file, along with the directory structure, chunking, and a prompt meant to bring an LLM up to speed on your project.
 
 Example Usage:
 
 ```bash
-python quick-cat.py file1.py file2.js -o output.md --copy
+python quick-cat.py "*.py" "*.js" "*.html" -o output.md --copy --recursive --skip-prompt --exclude "bootstrap*.*" "./migrations/" "./tools/" "./docker/" --chunk-size 150000 --prompt-file prompt.txt
 ```
 
 ### remove_line_from_files.py
