@@ -48,6 +48,253 @@ import glob
 # Constants
 CHUNK_SIZE = 100000
 
+FILE_TYPE_LANGUAGES = {
+    '.py': 'python',
+    '.js': 'javascript',
+    '.html': 'html',
+    '.css': 'css',
+    '.json': 'json',
+    '.log': '',
+    '.txt': '',
+    '.md': 'markdown',
+    '.xml': 'xml',
+    '.yaml': 'yaml',
+    '.yml': 'yaml',
+    '.sh': 'shell',
+    '.c': 'c',
+    '.cpp': 'cpp',
+    '.java': 'java',
+    '.php': 'php',
+    '.rb': 'ruby',
+    '.go': 'go',
+    '.swift': 'swift',
+    '.rs': 'rust',
+    '.pl': 'perl',
+    '.ps1': 'powershell',
+    '.bat': 'batch',
+    '.vbs': 'vbscript',
+    '.ini': 'ini',
+    '.toml': 'toml',
+    '.csv': 'csv',
+    '.tsv': 'tsv',
+    '.rst': 'rst',
+    '.tex': 'tex',
+    '.org': 'org',
+    '.jsx': 'jsx',
+    '.tsx': 'tsx',
+    '.feature': 'cucumber',
+    '.abap': 'abap',
+    '.adb': 'ada',
+    '.ads': 'ada',
+    '.ada': 'ada',
+    '.ahk': 'ahk',
+    '.ahkl': 'ahk',
+    '.htaccess': 'apacheconf',
+    'apache.conf': 'apacheconf',
+    'apache2.conf': 'apacheconf',
+    '.applescript': 'applescript',
+    '.as': 'as',
+    '.as3': 'as3',
+    '.asy': 'asy',
+    '.ksh': 'bash',
+    '.bash': 'bash',
+    '.ebuild': 'bash',
+    '.eclass': 'bash',
+    '.bat': 'bat',
+    '.cmd': 'bat',
+    '.befunge': 'befunge',
+    '.bmx': 'blitzmax',
+    '.boo': 'boo',
+    '.bf': 'brainfuck',
+    '.b': 'brainfuck',
+    '.c': 'c',
+    '.h': 'c',
+    '.cfm': 'cfm',
+    '.cfml': 'cfm',
+    '.cfc': 'cfm',
+    '.tmpl': 'cheetah',
+    '.spt': 'cheetah',
+    '.cl': 'cl',
+    '.lisp': 'cl',
+    '.el': 'cl',
+    '.clj': 'clojure',
+    '.cljs': 'clojure',
+    '.cmake': 'cmake',
+    'CMakeLists.txt': 'cmake',
+    '.coffee': 'coffeescript',
+    '.sh-session': 'console',
+    'control': 'control',
+    '.cpp': 'cpp',
+    '.hpp': 'cpp',
+    '.c++': 'cpp',
+    '.h++': 'cpp',
+    '.cc': 'cpp',
+    '.hh': 'cpp',
+    '.cxx': 'cpp',
+    '.hxx': 'cpp',
+    '.pde': 'cpp',
+    '.cs': 'csharp',
+    '.css': 'css',
+    '.pyx': 'cython',
+    '.pxd': 'cython',
+    '.pxi': 'cython',
+    '.d': 'd',
+    '.di': 'd',
+    '.pas': 'delphi',
+    '.diff': 'diff',
+    '.patch': 'diff',
+    '.dpatch': 'dpatch',
+    '.darcspatch': 'dpatch',
+    '.duel': 'duel',
+    '.jbst': 'duel',
+    '.dylan': 'dylan',
+    '.dyl': 'dylan',
+    '.erb': 'erb',
+    '.erl-sh': 'erl',
+    '.erl': 'erlang',
+    '.hrl': 'erlang',
+    '.evoque': 'evoque',
+    '.factor': 'factor',
+    '.flx': 'felix',
+    '.flxh': 'felix',
+    '.f': 'fortran',
+    '.f90': 'fortran',
+    '.s': 'gas',
+    '.S': 'gas',
+    '.kid': 'genshi',
+    '.gitignore': 'gitignore',
+    '.vert': 'glsl',
+    '.frag': 'glsl',
+    '.geo': 'glsl',
+    '.plot': 'gnuplot',
+    '.plt': 'gnuplot',
+    '.go': 'go',
+    '.man': 'groff',
+    '.1': 'groff',
+    '.2': 'groff',
+    '.3': 'groff',
+    '.4': 'groff',
+    '.5': 'groff',
+    '.6': 'groff',
+    '.7': 'groff',
+    '.8': 'groff',
+    '.9': 'groff',
+    '.haml': 'haml',
+    '.hs': 'haskell',
+    '.htm': 'html',
+    '.xhtml': 'html',
+    '.xslt': 'html',
+    '.hx': 'hx',
+    '.hy': 'hybris',
+    '.hyb': 'hybris',
+    '.cfg': 'ini',
+    '.io': 'io',
+    '.ik': 'ioke',
+    '.weechatlog': 'irc',
+    '.jade': 'jade',
+    '.java': 'java',
+    '.jsp': 'jsp',
+    '.lhs': 'lhs',
+    '.ll': 'llvm',
+    '.lgt': 'logtalk',
+    '.lua': 'lua',
+    '.wlua': 'lua',
+    '.mak': 'make',
+    'Makefile': 'make',
+    'makefile': 'make',
+    'Makefile.': 'make',
+    'GNUmakefile': 'make',
+    '.mao': 'mako',
+    '.maql': 'maql',
+    '.mhtml': 'mason',
+    '.mc': 'mason',
+    '.mi': 'mason',
+    'autohandler': 'mason',
+    'dhandler': 'mason',
+    '.md': 'markdown',
+    '.mo': 'modelica',
+    '.def': 'modula2',
+    '.mod': 'modula2',
+    '.moo': 'moocode',
+    '.mu': 'mupad',
+    '.mxml': 'mxml',
+    '.myt': 'myghty',
+    'autodelegate': 'myghty',
+    '.asm': 'nasm',
+    '.ASM': 'nasm',
+    '.ns2': 'newspeak',
+    '.objdump': 'objdump',
+    '.m': 'objectivec',
+    '.j': 'objectivej',
+    '.ml': 'ocaml',
+    '.mli': 'ocaml',
+    '.mll': 'ocaml',
+    '.mly': 'ocaml',
+    '.ooc': 'ooc',
+    '.pl': 'perl',
+    '.pm': 'perl',
+    '.php': 'php',
+    '.php(345)': 'php',
+    '.ps': 'postscript',
+    '.eps': 'postscript',
+    '.pot': 'pot',
+    '.po': 'pot',
+    '.pov': 'pov',
+    '.inc': 'pov',
+    '.prolog': 'prolog',
+    '.pro': 'prolog',
+    '.pl': 'prolog',
+    '.properties': 'properties',
+    '.proto': 'protobuf',
+    '.py3tb': 'py3tb',
+    '.pytb': 'pytb',
+    '.sc': 'python',
+    '.tac': 'python',
+    '.r': 'r',
+    '.rb': 'rb',
+    '.rbw': 'rb',
+    '.rake': 'rb',
+    '.gemspec': 'rb',
+    '.rbx': 'rb',
+    '.duby': 'rb',
+    '.Rout': 'rconsole',
+    '.r': 'rebol',
+    '.r3': 'rebol',
+    '.cw': 'redcode',
+    '.rhtml': 'rhtml',
+    '.rst': 'rst',
+    '.sass': 'sass',
+    '.scala': 'scala',
+    '.scaml': 'scaml',
+    '.scm': 'scheme',
+    '.scss': 'scss',
+    '.st': 'smalltalk',
+    '.tpl': 'smarty',
+    'sources.list': 'sourceslist',
+    '.S': 'splus',
+    '.R': 'splus',
+    '.sql': 'sql',
+    '.sqlite3-console': 'sqlite3',
+    'squid.conf': 'squidconf',
+    '.ssp': 'ssp',
+    '.tcl': 'tcl',
+    '.tcsh': 'tcsh',
+    '.csh': 'tcsh',
+    '.tex': 'tex',
+    '.txt': 'text',
+    '.v': 'v',
+    '.vala': 'vala',
+    '.vapi': 'vala',
+    '.vb': 'vbnet',
+    '.bas': 'vbnet',
+    '.vm': 'velocity',
+    '.fhtml': 'velocity',
+    '.vim': 'vim',
+    '.vimrc': 'vim',
+    '.xqy': 'xquery',
+    '.xquery': 'xquery'
+}
+
 # Sets up logging
 def setup_logging(script_name):
     """Setup logging configuration to output logs to a file and console."""
@@ -100,43 +347,10 @@ def get_file_type(file):
     Returns:
         str: File type string for markdown syntax highlighting.
     """
-    ext = file.suffix.lower()
-    file_types = {
-        '.py': 'python',
-        '.js': 'javascript',
-        '.html': 'html',
-        '.css': 'css',
-        '.json': 'json',
-        '.log': '',
-        '.txt': '',
-        '.md': 'markdown',
-        '.xml': 'xml',
-        '.yaml': 'yaml',
-        '.yml': 'yaml',
-        '.sh': 'shell',
-        '.c': 'c',
-        '.cpp': 'cpp',
-        '.java': 'java',
-        '.php': 'php',
-        '.rb': 'ruby',
-        '.go': 'go',
-        '.swift': 'swift',
-        '.rs': 'rust',
-        '.pl': 'perl',
-        '.ps1': 'powershell',
-        '.bat': 'batch',
-        '.vbs': 'vbscript',
-        '.ini': 'ini',
-        '.toml': 'toml',
-        '.csv': 'csv',
-        '.tsv': 'tsv',
-        '.rst': 'rst',
-        '.tex': 'tex',
-        '.org': 'org',
-        '.jsx': 'jsx',
-        '.tsx': 'tsx'
-    }
-    return file_types.get(ext, '')
+    # Extract the file extension
+    ext = Path(file).suffix.lower()
+    # Return the language if it's in the dictionary, else default to 'text'
+    return FILE_TYPE_LANGUAGES.get(ext, 'text')
 
 def concatenate_files(files, output_file, skip_prompt=False, prompt_file=None):
     """
@@ -341,9 +555,9 @@ def concatenate_files(files, output_file, skip_prompt=False, prompt_file=None):
             
             out_file.write('\n```\n\n')
 
-def split_into_chunks(file_path, chunk_size=CHUNK_SIZE):
+def split_into_chunks_with_messages(file_path, chunk_size=CHUNK_SIZE):
     """
-    Splits a file into smaller chunks.
+    Splits a file into smaller chunks with whole lines and adds end-of-part messages.
 
     Parameters:
         file_path (str): The path to the file to split.
@@ -355,7 +569,25 @@ def split_into_chunks(file_path, chunk_size=CHUNK_SIZE):
     with open(file_path, 'r') as f:
         content = f.read()
 
-    chunks = [content[i:i + chunk_size] for i in range(0, len(content), chunk_size)]
+    lines = content.splitlines(keepends=True)
+    chunks = []
+    current_chunk = ''
+    part_number = 1
+
+    for line in lines:
+        if len(current_chunk) + len(line) > chunk_size:
+            # Add end-of-part message
+            if part_number == len(chunks) + 1:  # For all parts except the last one
+                current_chunk += f"\nEnd of part {part_number}. Please confirm receipt.\n"
+                chunks.append(current_chunk)
+                current_chunk = ''
+                part_number += 1
+        current_chunk += line
+
+    if current_chunk:  # Add the last chunk
+        current_chunk += f"\nEnd of part {part_number}. Please confirm receipt.\n"
+        chunks.append(current_chunk)
+
     chunk_files = []
     base_name = Path(file_path).stem
     ext = Path(file_path).suffix
@@ -367,6 +599,7 @@ def split_into_chunks(file_path, chunk_size=CHUNK_SIZE):
         chunk_files.append(chunk_file_path)
 
     return chunk_files
+
 
 def split_into_chunks_with_messages(file_path, chunk_size=CHUNK_SIZE):
     """
@@ -415,6 +648,10 @@ def split_into_chunks_with_messages(file_path, chunk_size=CHUNK_SIZE):
 
     return chunk_files
 
+from pathlib import Path
+
+from pathlib import Path
+
 def split_into_chunks_with_messages(file_path, chunk_size):
     """
     Splits a file into smaller chunks with whole lines and handles code boxes properly,
@@ -427,6 +664,62 @@ def split_into_chunks_with_messages(file_path, chunk_size):
     Returns:
         list of str: List of file paths of the chunks.
     """
+    def count_chunks(file_path, chunk_size):
+        with open(file_path, 'r') as f:
+            content = f.read()
+
+        lines = content.splitlines(keepends=True)
+        current_chunk = ''
+        chunk_count = 0
+        in_code_box = False
+
+        for line in lines:
+            if line.startswith('```') and not in_code_box:
+                in_code_box = True
+            elif line.startswith('```') and in_code_box:
+                in_code_box = False
+
+            if len(current_chunk) + len(line) > chunk_size:
+                chunk_count += 1
+                current_chunk = ''  # Reset for new chunk
+
+            current_chunk += line
+
+        if len(current_chunk) > 0:
+            chunk_count += 1  # For the last chunk
+
+        return chunk_count
+
+    total_chunks = count_chunks(file_path, chunk_size)
+
+    def add_end_of_part_message(chunk, part_number, total_chunks, current_file_name, in_code_box):
+        if in_code_box:
+            chunk += '```\n'
+        chunk += f"\n{current_file_name} continued in next file\n"
+        chunk += f"\nEnd of part {part_number} of {total_chunks}. Please confirm receipt and let me know when you are ready for the next part.\n"
+        return chunk
+
+    def add_start_of_part_message(current_chunk, part_number, current_file_name, in_code_box):
+        """
+        Adds a start-of-part message to the current chunk with appropriate code box formatting.
+
+        Parameters:
+            current_chunk (str): The current chunk of text.
+            part_number (int): The part number for the chunk.
+            current_file_name (str): The name of the current file.
+            in_code_box (bool): Whether the chunk is within a code box.
+
+        Returns:
+            str: The updated chunk with the start-of-part message.
+        """
+        current_chunk += f"\nBeginning of part {part_number}\n\n"
+        current_chunk += f"{current_file_name} (continued)\n\n"
+        if in_code_box:
+            # Use the get_file_type function to determine the code box language
+            file_type = get_file_type(current_file_name)
+            current_chunk += f'```{file_type}\n'
+        return current_chunk
+
     with open(file_path, 'r') as f:
         content = f.read()
 
@@ -437,20 +730,6 @@ def split_into_chunks_with_messages(file_path, chunk_size):
     in_code_box = False
     current_file_name = ""
 
-    def add_end_of_part_message(chunk, part_number, current_file_name, in_code_box):
-        if in_code_box:
-            chunk += '```\n'
-        chunk += f"\n{current_file_name} continued in next file\n"
-        chunk += f"\nEnd of part {part_number}. Please confirm receipt and let me know when you are ready for the next part.\n"
-        return chunk
-
-    def add_start_of_part_message(current_chunk, part_number, current_file_name, in_code_box):
-        current_chunk += f"\nBeginning of part {part_number}\n\n"
-        current_chunk += f"{current_file_name} (continued)\n\n"
-        if in_code_box:
-            current_chunk += '```python\n'  # Assuming it's a Python file; adjust as needed
-        return current_chunk
-
     for line in lines:
         if line.startswith('```') and not in_code_box:
             in_code_box = True
@@ -458,7 +737,7 @@ def split_into_chunks_with_messages(file_path, chunk_size):
             in_code_box = False
 
         if len(current_chunk) + len(line) > chunk_size:
-            current_chunk = add_end_of_part_message(current_chunk, part_number, current_file_name, in_code_box)
+            current_chunk = add_end_of_part_message(current_chunk, part_number, total_chunks, current_file_name, in_code_box)
             chunks.append(current_chunk)
             part_number += 1
             current_chunk = add_start_of_part_message('', part_number, current_file_name, in_code_box)
@@ -472,7 +751,7 @@ def split_into_chunks_with_messages(file_path, chunk_size):
     if current_chunk:
         if in_code_box:
             current_chunk += '```\n'
-        current_chunk += f"\nEnd of part {part_number}. This is the final part. Please confirm receipt of all parts and proceed with the analysis only after receiving this message.\n"
+        current_chunk += f"\nEnd of part {part_number} of {total_chunks}. This is the final part. Please confirm receipt of all parts and proceed with the analysis only after receiving this message.\n"
         chunks.append(current_chunk)
 
     # Write chunks to files
@@ -487,6 +766,8 @@ def split_into_chunks_with_messages(file_path, chunk_size):
         chunk_files.append(chunk_file_path)
 
     return chunk_files
+
+
 
 # Copy contents to clipboard
 def copy_to_clipboard(content):
