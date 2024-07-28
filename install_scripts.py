@@ -2,10 +2,11 @@
 
 """
 This script lists all Python files in the current directory and its subdirectories.
-It prompts the user whether they want to make each file executable and move it to /usr/local/bin.
+It prompts the user whether they want to make each file executable and copy it to /usr/local/bin.
 """
 
 import os
+import sys
 import shutil
 import subprocess
 import glob
@@ -45,15 +46,15 @@ def highlight_path(path):
     highlighted_dirs = [Fore.LIGHTGREEN_EX + part + Style.RESET_ALL if part != dirs[-1] else Fore.YELLOW + part + Style.RESET_ALL for part in dirs]
     return '/'.join(highlighted_dirs)
 
-def move_script(script_name, destination_path):
-    """Moves the script to the destination path."""
+def copy_script(script_name, destination_path):
+    """Copies the script to the destination path."""
     try:
-        shutil.move(script_name, destination_path)
-        print(f"Moved {script_name} to {destination_path}")
-        logging.info(f"Moved {script_name} to {destination_path}")
+        shutil.copy(script_name, destination_path)
+        print(f"Copied {script_name} to {destination_path}")
+        logging.info(f"Copied {script_name} to {destination_path}")
     except Exception as e:
-        print(f"Error moving script: {e}")
-        logging.error(f"Error moving script: {e}")
+        print(f"Error copying script: {e}")
+        logging.error(f"Error copying script: {e}")
 
 def make_executable(path):
     """Makes the script at the given path executable."""
@@ -82,7 +83,8 @@ def ensure_path_in_zshrc(destination_dir, zshrc_path):
             print(f"{destination_dir} is already in PATH")
             logging.info(f"{destination_dir} is already in PATH")
         
-        subprocess.run(['source', zshrc_path], shell=True, check=True)
+        # Source the .zshrc file within a shell context
+        subprocess.run(f'source {zshrc_path}', shell=True, executable='/bin/zsh', check=True)
         print("Sourced the .zshrc file")
         logging.info("Sourced the .zshrc file")
     except Exception as e:
@@ -104,10 +106,10 @@ def prompt_include_file(file):
     """Prompt the user to include a single file."""
     include_file = input(f"Do you want to include this file: " +
                          Fore.LIGHTGREEN_EX + highlight_path(file) + Style.RESET_ALL + "? " +
-                         Fore.WHITE + "(" + Fore.LIGHTGREEN_EX + "y" + Fore.WHITE + "/" + Fore.LIGHTRED_EX + "n" + Fore.WHITE + ") " +
+                         Fore.WHITE + "(" + Fore.LIGHTGREEN_EX + "y" + Fore.WHITE + "/" + Fore.LIGHTRED_EX + "n" + Fore.WHITE + "/" + Fore.LIGHTYELLOW_EX + "s" + Fore.WHITE + ") " +
                          Style.RESET_ALL + "[default: " + Fore.LIGHTGREEN_EX + "YES" + Style.RESET_ALL + "]: ")
     logging.debug(f"User input for file {file}: {include_file}")
-    return include_file.lower() in ["y", "yes", ""]
+    return include_file.lower()
 
 def find_python_files(directory):
     """
@@ -122,11 +124,14 @@ def find_python_files(directory):
     return glob.glob(os.path.join(directory, '**', '*.py'), recursive=True)
 
 def main():
-    """Main function to execute the script logic."""
+    logging.info("Script started")
     try:
         clear_screen()
-        current_directory = os.getcwd()
-        python_files = find_python_files(current_directory)
+        if len(sys.argv) > 1:
+            python_files = [sys.argv[1]]
+        else:
+            current_directory = os.getcwd()
+            python_files = find_python_files(current_directory)
         
         if not python_files:
             print(Fore.RED + "No Python files found in the current directory." + Style.RESET_ALL)
@@ -136,20 +141,28 @@ def main():
         if prompt_include_all_files(python_files):
             files_to_include = python_files
         else:
-            files_to_include = [file for file in python_files if prompt_include_file(file)]
+            files_to_include = []
+            for file in python_files:
+                user_choice = prompt_include_file(file)
+                if user_choice in ["y", "yes", ""]:
+                    files_to_include.append(file)
+                elif user_choice in ["s", "skip"]:
+                    break
         
         for file in files_to_include:
             destination_path = os.path.join(DESTINATION_DIR, os.path.basename(file))
-            move_script(file, destination_path)
+            copy_script(file, destination_path)
             make_executable(destination_path)
         
         ensure_path_in_zshrc(DESTINATION_DIR, ZSHRC_PATH)
         
-        print(Fore.GREEN + "Selected files have been moved and made executable." + Style.RESET_ALL)
-        logging.info("Selected files have been moved and made executable.")
+        print(Fore.GREEN + "Selected files have been copied and made executable." + Style.RESET_ALL)
+        logging.info("Selected files have been copied and made executable.")
     except Exception as e:
         logging.error(f"An error occurred: {e}")
         print(Fore.RED + f"An error occurred: {e}" + Style.RESET_ALL)
+    finally:
+        logging.info("Script ended")
 
 if __name__ == "__main__":
     main()
